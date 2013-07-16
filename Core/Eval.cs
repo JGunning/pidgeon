@@ -1,19 +1,17 @@
-﻿/***************************************************************************
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) version 3.                                           *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.         *
- ***************************************************************************/
+﻿//  This program is free software; you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation; either version 2 of the License, or   
+//  (at your option) version 3.                                         
+
+//  This program is distributed in the hope that it will be useful,     
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of      
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       
+//  GNU General Public License for more details.                        
+
+//  You should have received a copy of the GNU General Public License   
+//  along with this program; if not, write to the                       
+//  Free Software Foundation, Inc.,                                     
+//  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System.IO;
 using System.Threading;
@@ -24,6 +22,12 @@ namespace Client
 {
     public partial class Core
     {
+        /// <summary>
+        /// Return a value of variable if it exist
+        /// </summary>
+        /// <param name="variable"></param>
+        /// <param name="window"></param>
+        /// <returns></returns>
         public static string EvaluateVariable(string variable, Graphics.Window window)
         {
             switch(variable)
@@ -49,9 +53,16 @@ namespace Client
             return null; 
         }
 
+        /// <summary>
+        /// This function will take a text and make a condition from it. Returns either text "True" or "False" or returns the same text
+        /// as you provided to it when it's not understood
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="w"></param>
+        /// <returns></returns>
         public static string EvaluateText(string text, Graphics.Window w = null)
         {
-            Core.DebugLog("if: " + text);
+            Core.DebugLog("expression: " + text);
             if (w == null)
             {
                 w = SystemForm.Chat;

@@ -1,19 +1,18 @@
-﻿/***************************************************************************
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) version 3.                                           *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.         *
- ***************************************************************************/
+﻿//  This program is free software; you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation; either version 2 of the License, or   
+//  (at your option) version 3.                                         
+
+//  This program is distributed in the hope that it will be useful,     
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of      
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       
+//  GNU General Public License for more details.                        
+
+//  You should have received a copy of the GNU General Public License   
+//  along with this program; if not, write to the                       
+//  Free Software Foundation, Inc.,                                     
+//  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 
 // Definitions of functions that handle configuration
 
@@ -216,13 +215,15 @@ namespace Client
                     make_node("Configuration.UserData.LastSSL", Configuration.UserData.LastSSL.ToString(), curr, confname, config, xmlnode);
                     make_node("Configuration.UserData.SwitchWindowOnJoin", Configuration.UserData.SwitchWindowOnJoin.ToString(), curr, confname, config, xmlnode);
                     make_node("Configuration.irc.DetailedVersion", Configuration.irc.DetailedVersion.ToString(), curr, confname, config, xmlnode);
+                    make_node("Configuration.Kernel.KernelDump", Configuration.Kernel.KernelDump.ToString(), curr, confname, config, xmlnode);
                     make_comment(" ============= MISC ============= ", config, xmlnode);
                     make_node("Configuration.Parser.formatter", Configuration.Parser.formatter.ToString(), curr, confname, config, xmlnode);
                     make_node("Configuration.Parser.ParserCache", Configuration.Parser.ParserCache.ToString(), curr, confname, config, xmlnode);
                     make_node("Configuration.Media.NotificationSound", Configuration.Media.NotificationSound.ToString(), curr, confname, config, xmlnode);
                     make_node("Configuration.Kernel.Lang", Configuration.Kernel.Lang, curr, confname, config, xmlnode);
+                    make_node("Configuration.Parser.InputTrim", Configuration.Parser.InputTrim.ToString(), curr, confname, config, xmlnode);
                     make_node("Configuration.CurrentSkin", Configuration.CurrentSkin.Name, curr, confname, config, xmlnode);
-
+                    make_node("Configuration.irc.NetworkEncoding", Configuration.irc.NetworkEncoding.ToString(), curr, confname, config, xmlnode);
                     make_comment(" ============= EXTENSION CONFIGURATION ============= ", config, xmlnode);
                     foreach (KeyValuePair<string, string> data in Configuration.Extensions)
                     {
@@ -864,6 +865,29 @@ namespace Client
                                                         break;
                                                     case "Configuration.irc.DetailedVersion":
                                                         Configuration.irc.DetailedVersion = bool.Parse(curr.InnerText);
+                                                        break;
+                                                    case "Configuration.irc.NetworkEncoding":
+                                                        switch (curr.InnerText)
+                                                        {
+                                                            case "ASCIIEncoding":
+                                                                Configuration.irc.NetworkEncoding = System.Text.Encoding.ASCII;
+                                                                break;
+                                                            case "UTF32Encoding":
+                                                                Configuration.irc.NetworkEncoding = System.Text.Encoding.UTF32;
+                                                                break;
+                                                            case "UnicodeEncoding":
+                                                                Configuration.irc.NetworkEncoding = System.Text.Encoding.Unicode;
+                                                                break;
+                                                            case "UTF7Encoding":
+                                                                Configuration.irc.NetworkEncoding = System.Text.Encoding.UTF7;
+                                                                break;
+                                                        }
+                                                        break;
+                                                    case "Configuration.Parser.InputTrim":
+                                                        Configuration.Parser.InputTrim = bool.Parse(curr.InnerText);
+                                                        break;
+                                                    case "Configuration.Kernel.KernelDump":
+                                                        Configuration.Kernel.KernelDump = bool.Parse(curr.InnerText);
                                                         break;
                                                 }
                                             }

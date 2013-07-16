@@ -1,19 +1,17 @@
-﻿/***************************************************************************
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) version 3.                                           *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.         *
- ***************************************************************************/
+﻿//  This program is free software; you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation; either version 2 of the License, or   
+//  (at your option) version 3.                                         
+
+//  This program is distributed in the hope that it will be useful,     
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of      
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       
+//  GNU General Public License for more details.                        
+
+//  You should have received a copy of the GNU General Public License   
+//  along with this program; if not, write to the                       
+//  Free Software Foundation, Inc.,                                     
+//  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System;
 using System.Collections.Generic;
@@ -27,6 +25,39 @@ namespace Client.Graphics
     /// </summary>
     public partial class PidgeonList : Gtk.Bin
     {
+        /// <summary>
+        /// Sounds
+        /// </summary>
+        public GTK.Menu soundsToolStripMenuItem = new GTK.Menu("Enable sound");
+        /// <summary>
+        /// Notifications
+        /// </summary>
+        public GTK.Menu highlightToolStripMenuItem = new GTK.Menu("Enable notifications for this window");
+        /// <summary>
+        /// Menu
+        /// </summary>
+        public GTK.Menu partToolStripMenuItem = new GTK.Menu("Part");
+        /// <summary>
+        /// Menu
+        /// </summary>
+        public GTK.Menu closeToolStripMenuItem = new GTK.Menu("Close");
+        /// <summary>
+        /// join menu
+        /// </summary>
+        public GTK.Menu joinToolStripMenuItem = new GTK.Menu("Join");
+        /// <summary>
+        /// disconnect menu
+        /// </summary>
+        public GTK.Menu disconnectToolStripMenuItem = new GTK.Menu("Disconnect");
+        /// <summary>
+        /// Reconnect menu
+        /// </summary>
+        public GTK.Menu reconnectToolStripMenuItem = new GTK.Menu("Reconnect");
+        /// <summary>
+        /// Window that is selected now
+        /// </summary>
+        private Graphics.Window SelectedWindow = null;
+
         [GLib.ConnectBefore]
         private void Menu2(object sender, Gtk.ButtonPressEventArgs e)
         {
@@ -56,6 +87,30 @@ namespace Client.Graphics
             {
                 bool display = false;
                 Gtk.Menu menu = new Menu();
+                if (soundsToolStripMenuItem.Visible)
+                {
+                    Gtk.CheckMenuItem sounds = new CheckMenuItem(soundsToolStripMenuItem.Text);
+                    if (SelectedWindow != null)
+                    {
+                        sounds.Active = SelectedWindow.Sounds;
+                    }
+                    sounds.Sensitive = Configuration.Media.NotificationSound;
+                    sounds.Activated += new EventHandler(soundsToolStripMenuItem_Click);
+                    display = true;
+                    menu.Append(sounds);
+                }
+                if (highlightToolStripMenuItem.Visible)
+                {
+                    Gtk.CheckMenuItem notification = new CheckMenuItem(highlightToolStripMenuItem.Text);
+                    notification.Sensitive = Configuration.Kernel.Notice;
+                    if (SelectedWindow != null)
+                    {
+                        notification.Active = SelectedWindow.Highlights;
+                    }
+                    notification.Activated += new EventHandler(notificationToolStripMenuItem_Click);
+                    display = true;
+                    menu.Append(notification);
+                }
                 if (partToolStripMenuItem.Visible)
                 {
                     Gtk.MenuItem part = new MenuItem(partToolStripMenuItem.Text);
@@ -117,16 +172,39 @@ namespace Client.Graphics
             disconnectToolStripMenuItem.Visible = false;
         }
 
+        private void soundsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (SelectedWindow != null)
+            {
+                SelectedWindow.Sounds = !SelectedWindow.Sounds;
+            }
+        }
+
+        private void notificationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (SelectedWindow != null)
+            {
+                SelectedWindow.Highlights = !SelectedWindow.Highlights;
+            }
+        }
+
         private void joinToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            TreeIter iter;
-            TreePath[] path = tv.Selection.GetSelectedRows();
-            tv.Model.GetIter(out iter, path[0]);
-            ItemType type = (ItemType)tv.Model.GetValue(iter, 2);
-            if (type == ItemType.Channel)
+            try
             {
-                Channel ch = (Channel)tv.Model.GetValue(iter, 1);
-                ch._Network.Join(ch.Name);
+                TreeIter iter;
+                TreePath[] path = tv.Selection.GetSelectedRows();
+                tv.Model.GetIter(out iter, path[0]);
+                ItemType type = (ItemType)tv.Model.GetValue(iter, 2);
+                if (type == ItemType.Channel)
+                {
+                    Channel ch = (Channel)tv.Model.GetValue(iter, 1);
+                    ch._Network.Join(ch.Name);
+                }
+            }
+            catch (Exception fail)
+            {
+                Core.handleException(fail);
             }
         }
 
@@ -192,6 +270,7 @@ namespace Client.Graphics
         {
             try
             {
+                SelectedWindow = null;
                 RedrawMenu();
                 TreeIter iter;
                 TreePath[] path = tv.Selection.GetSelectedRows();
@@ -212,6 +291,7 @@ namespace Client.Graphics
                         window = chan.RetrieveWindow();
                         if (window != null)
                         {
+                            SelectedWindow = window;
                             window.MenuColor = Configuration.CurrentSkin.fontcolor;
                         }
                         if (!chan.IsAlive)
@@ -235,6 +315,7 @@ namespace Client.Graphics
                             server.ParentSv.ShowChat("!" + server.SystemWindowID);
                         }
                         server.SystemWindow.MenuColor = Configuration.CurrentSkin.fontcolor;
+                        SelectedWindow = server.SystemWindow;
                         Core.SelectedNetwork = server;
                         disconnectToolStripMenuItem.Visible = true;
                         closeToolStripMenuItem.Visible = true;
@@ -243,6 +324,7 @@ namespace Client.Graphics
                     case ItemType.Services:
                         ProtocolSv protocol = (ProtocolSv)tv.Model.GetValue(iter, 1);
                         closeToolStripMenuItem.Visible = true;
+                        SelectedWindow = protocol.SystemWindow;
                         protocol.ShowChat("!root");
                         Core.SelectedNetwork = null;
                         disconnectToolStripMenuItem.Visible = true;
@@ -251,6 +333,7 @@ namespace Client.Graphics
                     case ItemType.DCC:
                         ProtocolDCC dcc = (ProtocolDCC)tv.Model.GetValue(iter, 1);
                         closeToolStripMenuItem.Visible = true;
+                        SelectedWindow = dcc.SystemWindow;
                         dcc.ShowChat(dcc.SystemWindow.WindowName);
                         Core.SelectedNetwork = null;
                         disconnectToolStripMenuItem.Visible = true;
@@ -259,6 +342,7 @@ namespace Client.Graphics
                     case ItemType.QuasselCore:
                         ProtocolQuassel quassel = (ProtocolQuassel)tv.Model.GetValue(iter, 1);
                         closeToolStripMenuItem.Visible = true;
+                        SelectedWindow = quassel.SystemWindow;
                         quassel.ShowChat("!root");
                         Core.SelectedNetwork = null;
                         disconnectToolStripMenuItem.Visible = true;
@@ -277,6 +361,7 @@ namespace Client.Graphics
                         }
                         if (window != null)
                         {
+                            SelectedWindow = window;
                             window.MenuColor = Configuration.CurrentSkin.fontcolor;
                         }
                         us._Network._Protocol.ShowChat(us._Network.SystemWindowID + us.Nick);

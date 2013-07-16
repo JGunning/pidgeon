@@ -1,19 +1,17 @@
-﻿/***************************************************************************
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) version 3.                                           *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.         *
- ***************************************************************************/
+﻿//  This program is free software; you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation; either version 2 of the License, or   
+//  (at your option) version 3.                                         
+
+//  This program is distributed in the hope that it will be useful,     
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of      
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the       
+//  GNU General Public License for more details.                        
+
+//  You should have received a copy of the GNU General Public License   
+//  along with this program; if not, write to the                       
+//  Free Software Foundation, Inc.,                                     
+//  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 using System.IO;
 using System.Threading;
@@ -759,7 +757,7 @@ namespace Client
         {
             if (KernelThread == Thread.CurrentThread)
             {
-                Client.Forms.OpenDCC f = new Forms.OpenDCC(Server, User, (uint)Port, Listener, SSL, network);
+                new Forms.OpenDCC(Server, User, (uint)Port, Listener, SSL, network);
                 return;
             }
             lock (Graphics.PidgeonList.WaitingDCC)
@@ -775,7 +773,7 @@ namespace Client
         /// <param name="requestDCC"></param>
         public static void OpenDCC(Graphics.PidgeonList.RequestDCC requestDCC)
         {
-            Client.Forms.OpenDCC f = new Forms.OpenDCC(requestDCC.Server, requestDCC.User, (uint)requestDCC.Port, requestDCC.Listener, requestDCC.SSL, requestDCC.network);
+            new Forms.OpenDCC(requestDCC.Server, requestDCC.User, (uint)requestDCC.Port, requestDCC.Listener, requestDCC.SSL, requestDCC.network);
             return;
         }
 
@@ -865,7 +863,7 @@ namespace Client
             {
                 return;
             }
-            if (Configuration.Media.NotificationSound)
+            if (Configuration.Media.NotificationSound && SystemForm.Chat.Sounds)
             {
                 System.Media.SystemSounds.Asterisk.Play();
             }
@@ -1274,6 +1272,44 @@ namespace Client
             DebugLog(_exception.Message + " at " + _exception.Source + " info: " + _exception.Data.ToString());
             IsBlocked = true;
             recovery_exception = _exception;
+            if (Configuration.Kernel.KernelDump)
+            {
+                Core.DebugLog("Generating report");
+                string dump = "KERNEL DUMP\n\n";
+                dump += "Time: " + DateTime.Now.ToString() + "\n";
+                dump += "Version: " + Application.ProductVersion + RevisionProvider.GetHash() + "\n";
+                dump += "Extensions: " + "\n";
+                lock (Extensions)
+                {
+                    foreach (Extension xx in Extensions)
+                    {
+                        dump += "  " + xx.Name + " version: " + xx.Version + " status: " + xx._Status.ToString() + "\n";
+                    }
+                }
+                dump += "Exception: " + _exception.Message + "\n";
+                dump += "Source: " + _exception.Source + "\n";
+                dump += "Stack trace: " + _exception.StackTrace + "\n";
+                if (_exception.InnerException != null)
+                {
+                    dump += "Inner: " + _exception.InnerException.ToString() + "\n";
+                }
+                dump += "Thread name: " + Thread.CurrentThread.Name + "\n";
+                dump += "Is kernel: " + (Thread.CurrentThread != _KernelThread).ToString() + "\n";
+                dump += "Ring log:\n";
+                foreach (string line in RingBuffer)
+                {
+                    dump += line + "\n";
+                }
+                dump += "That's all folks";
+                int current = 0;
+                string file = Root + "dump__" + current.ToString();
+                while (File.Exists(file))
+                {
+                    current++;
+                    file = Root + "dump__" + current.ToString();
+                }
+                File.WriteAllText(file, dump);
+            }
             _RecoveryThread = new Thread(Recover);
             _RecoveryThread.Start();
             if (Thread.CurrentThread != _KernelThread)
